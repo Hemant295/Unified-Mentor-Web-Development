@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speed Fitness Gym – Management (Firebase)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f172a;      /* slate-900 */
+      --panel:#111827;   /* gray-900 */
+      --muted:#334155;   /* slate-700 */
+      --text:#e5e7eb;    /* gray-200 */
+      --accent:#22d3ee;  /* cyan-400 */
+      --accent-2:#60a5fa;/* blue-400 */
+      --ok:#22c55e;      /* green-500 */
+      --warn:#f59e0b;    /* amber-500 */
+      --bad:#ef4444;     /* red-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:linear-gradient(120deg, #0f172a, #0b1022 60%);
+      color:var(--text);
+    }
+    .wrap{max-width:1200px; margin:24px auto; padding:0 16px}
+    .card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.2)}
+    .row{display:flex; gap:16px}
+    .col{flex:1}
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 20px; border-radius:16px; margin-bottom:16px;
+      background: radial-gradient(1200px 1200px at 0% 0%, rgba(34,211,238,0.15), transparent 40%),
+                 radial-gradient(800px 800px at 100% 0%, rgba(96,165,250,0.12), transparent 40%),
+                 rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+    }
+    .brand{display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.3px}
+    .brand .logo{width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#0b1022; font-weight:800}
+    .chip{padding:6px 10px; border-radius:999px; font-size:12px; background:rgba(255,255,255,0.06); border:1px dashed rgba(255,255,255,0.15)}
+    nav{display:flex; gap:8px; flex-wrap:wrap}
+    .tab{border:none; background:rgba(255,255,255,0.04); color:var(--text); padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:600}
+    .tab.active{outline:2px solid rgba(34,211,238,0.3); background:rgba(34,211,238,0.12)}
+    .btn{cursor:pointer; border:none; padding:10px 12px; border-radius:10px; font-weight:700; letter-spacing:.2px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#0b1022}
+    .btn.secondary{background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.15)}
+    .btn.danger{background:var(--bad); color:white}
+    .btn.warn{background:var(--warn); color:#101010}
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+    .stat{padding:14px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08)}
+    .stat h3{margin:0; font-size:13px; opacity:.8}
+    .stat p{margin:6px 0 0; font-size:24px; font-weight:800}
+
+    form{padding:16px; display:grid; gap:10px}
+    label{font-size:12px; opacity:.9}
+    input, select, textarea{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14);
+      background:rgba(4,7,20,0.5); color:var(--text); outline:none
+    }
+    input:focus, select:focus, textarea:focus{border-color:var(--accent)}
+    table{width:100%; border-collapse:separate; border-spacing:0; font-size:14px}
+    thead th{position:sticky; top:0; background:rgba(255,255,255,0.06);}
+    th, td{padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.08)}
+    tr:hover td{background:rgba(255,255,255,0.02)}
+    .tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .right{margin-left:auto}
+    .hidden{display:none}
+    .auth-card{max-width:420px; margin:80px auto; padding:22px}
+    .muted{opacity:.8}
+    .search{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.02); color:var(--text)}
+    .tag{padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.04)}
+    .footer{opacity:.7; font-size:12px; text-align:center; margin:24px 0}
+    @media (max-width:700px){ .row{flex-direction:column} header{gap:12px} }
+  </style>
+</head>
+<body>
+  <!-- AUTH SCREEN -->
+  <section id="auth" class="hidden">
+    <div class="card auth-card">
+      <div class="brand" style="justify-content:center; margin-bottom:12px">
+        <div class="logo">SF</div>
+        <div>Speed Fitness Gym</div>
+      </div>
+      <h2 style="margin:0 0 12px">Admin Sign In</h2>
+      <p class="muted" style="margin:0 0 16px">Use email/password created in Firebase Auth.</p>
+      <form id="login-form">
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" required placeholder="you@example.com" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" required placeholder="••••••••" />
+        </div>
+        <button class="btn" type="submit">Sign In</button>
+        <button class="btn secondary" id="seed-admin" type="button" title="Creates a user if none exists">Create Admin (once)</button>
+      </form>
+      <p class="footer">Powered by Firebase Auth + Firestore</p>
+    </div>
+  </section>
+
+  <!-- APP SHELL -->
+  <section id="app" class="hidden">
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <div class="logo">SF</div>
+          <div>
+            Speed Fitness Gym
+            <div class="chip" id="gym-location">Bazar Samiti, Near SBI, Patna</div>
+          </div>
+        </div>
+        <nav id="tabs">
+          <button class="tab active" data-tab="dashboard">Dashboard</button>
+          <button class="tab" data-tab="members">Members</button>
+          <button class="tab" data-tab="attendance">Attendance</button>
+          <button class="tab" data-tab="payments">Payments</button>
+          <button class="tab" data-tab="trainers">Trainers</button>
+          <button class="tab" data-tab="settings">Settings</button>
+        </nav>
+        <div class="tools">
+          <span id="admin-email" class="tag">—</span>
+          <button class="btn secondary" id="logout">Logout</button>
+        </div>
+      </header>
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="card" style="padding:16px">
+        <div class="grid">
+          <div class="stat"><h3>Total Members</h3><p id="stat-members">0</p></div>
+          <div class="stat"><h3>Active (Paid)</h3><p id="stat-active">0</p></div>
+          <div class="stat"><h3>Expiring ≤ 7 days</h3><p id="stat-expiring">0</p></div>
+          <div class="stat"><h3>Today's Attendance</h3><p id="stat-att">0</p></div>
+        </div>
+      </div>
+
+      <!-- MEMBERS -->
+      <div id="members" class="card hidden" style="padding:12px">
+        <div class="row" style="align-items:center; padding:8px 12px 0">
+          <div class="tools">
+            <input id="searchMember" class="search" placeholder="Search name or phone" />
+            <button class="btn secondary" id="exportMembers">Export CSV</button>
+          </div>
+          <div class="right tools">
+            <button class="btn" id="openAddMember">+ Add Member</button>
+          </div>
+        </div>
+        <div style="max-height:60vh; overflow:auto; margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Phone</th><th>Plan</th><th>Join</th><th>Expiry</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="memberRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div id="attendance" class="card hidden" style="padding:12px">
+        <div class="row">
+          <div class="col">
+            <form id="attForm" class="card">
+              <h3 style="margin:12px 16px 0">Mark Attendance</h3>
+              <div style="padding:0 16px 12px" class="muted">Select member and date.</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 16px">
+                <div>
+                  <label>Member</label>
+                  <select id="attMember" required></select>
+                </div>
+                <div>
+                  <label>Date</label>
+                  <input id="attDate" type="date" required />
+                </div>
+                <div>
+                  <label>Status</label>
+                  <select id="attStatus">
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                  </select>
+                </div>
+                <div style="align-self:end"><button class="btn" type="submit">Save</button></div>
+              </div>
+            </form>
+          </div>
+          <div class="col">
+            <div class="card" style="padding:12px">
+              <div class="tools">
+                <input id="attFilterDate" class="search" type="date" />
+                <button class="btn secondary" id="attToday">Today</button>
+              </div>
+              <div style="max-height:60vh; overflow:auto; margin-top:10px">
+                <table>
+                  <thead><tr><th>Date</th><th>Name</th><th>Status</th><th></th></tr></thead>
+                  <tbody id="attRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div id="payments" class="card hidden" style="padding:12px">
+        <div class="row">
+          <div class="col">
+            <form id="payForm" class="card">
+              <h3 style="margin:12px 16px 0">Record Payment</h3>
+              <div style="padding:0 16px 12px" class="muted">Payment extends membership by selected plan duration.</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 16px">
+                <div>
+                  <label>Member</label>
+                  <select id="payMember" required></select>
+                </div>
+                <div>
+                  <label>Amount (₹)</label>
+                  <input id="payAmount" type="number" min="0" step="1" required />
+                </div>
+                <div>
+                  <label>Plan</label>
+                  <select id="payPlan">
+                    <option value="Monthly">Monthly</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Half-Yearly">Half-Yearly</option>
+                    <option value="Yearly">Yearly</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Mode</label>
+                  <select id="payMode">
+                    <option>Cash</option>
+                    <option>UPI</option>
+                    <option>Card</option>
+                    <option>Bank</option>
+                  </select>
+                </div>
+                <div style="grid-column:span 2">
+                  <label>Note</label>
+                  <input id="payNote" placeholder="optional" />
+                </div>
+                <div style="align-self:end"><button class="btn" type="submit">Save</button></div>
+              </div>
+            </form>
+          </div>
+          <div class="col">
+            <div class="card" style="padding:12px">
+              <div class="tools">
+                <input id="paySearch" class="search" placeholder="Search by member" />
+                <button class="btn secondary" id="exportPayments">Export CSV</button>
+              </div>
+              <div style="max-height:60vh; overflow:auto; margin-top:10px">
+                <table>
+                  <thead><tr><th>Date</th><th>Member</th><th>Amount</th><th>Mode</th><th>Plan</th><th>Note</th></tr></thead>
+                  <tbody id="payRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRAINERS -->
+      <div id="trainers" class="card hidden" style="padding:12px">
+        <div class="row" style="align-items:center; padding:8px 12px 0">
+          <div class="tools">
+            <input id="trainerName" class="search" placeholder="Trainer name" />
+            <input id="trainerPhone" class="search" placeholder="Phone" />
+            <button class="btn" id="addTrainer">+ Add</button>
+          </div>
+        </div>
+        <div style="max-height:60vh; overflow:auto; margin-top:10px">
+          <table>
+            <thead><tr><th>Name</th><th>Phone</th><th></th></tr></thead>
+            <tbody id="trainerRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="settings" class="card hidden" style="padding:16px">
+        <h3 style="margin-top:0">Gym Settings</h3>
+        <div class="row">
+          <div class="col">
+            <form id="gymForm">
+              <label>Gym Name</label>
+              <input id="gymName" placeholder="Speed Fitness Gym" />
+              <label>Address</label>
+              <input id="gymAddress" placeholder="Bazar Samiti, Near SBI, Patna" />
+              <label>Default Monthly Fee (₹)</label>
+              <input id="gymFee" type="number" min="0" step="1" value="1000" />
+              <button class="btn" type="submit" style="margin-top:8px">Save</button>
+            </form>
+          </div>
+          <div class="col">
+            <div class="stat">
+              <h3>Data Model</h3>
+              <p style="font-size:14px; font-weight:500; line-height:1.6">
+                <code>members</code>, <code>attendance</code>, <code>payments</code>, <code>trainers</code>, <code>meta/gym</code>
+              </p>
+              <div class="muted">All reads/writes require auth (configure in Firestore Rules).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="footer">© <span id="year"></span> Speed Fitness Gym · Built with Firebase</p>
+    </div>
+  </section>
+
+  <!-- ADD/EDIT MEMBER MODAL -->
+  <dialog id="memberDialog" style="border:none; border-radius:16px; padding:0; background:transparent">
+    <div class="card" style="min-width:320px; max-width:520px; padding:16px">
+      <h3 id="memberDlgTitle" style="margin:6px 0 2px">Add Member</h3>
+      <form id="memberForm" style="padding:0 0 12px">
+        <input type="hidden" id="memberId" />
+        <div class="grid">
+          <div>
+            <label>Name</label>
+            <input id="mName" required />
+          </div>
+          <div>
+            <label>Phone</label>
+            <input id="mPhone" required />
+          </div>
+          <div>
+            <label>Gender</label>
+            <select id="mGender">
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label>Plan</label>
+            <select id="mPlan">
+              <option>Monthly</option>
+              <option>Quarterly</option>
+              <option>Half-Yearly</option>
+              <option>Yearly</option>
+            </select>
+          </div>
+          <div>
+            <label>Join Date</label>
+            <input id="mJoin" type="date" />
+          </div>
+          <div>
+            <label>Expiry Date</label>
+            <input id="mExpiry" type="date" />
+          </div>
+          <div>
+            <label>Active</label>
+            <select id="mActive">
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px">
+          <button type="button" class="btn secondary" id="closeMemberDlg">Cancel</button>
+          <button class="btn" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <script type="module">
+    // ======= FIREBASE SDK IMPORTS (v10.x) =======
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, updateDoc, doc, deleteDoc, where, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
+    // ======= CONFIG: REPLACE WITH YOUR PROJECT VALUES =======
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // ======= INIT =======
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ======= UI HELPERS =======
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmt = d => new Date(d).toLocaleDateString();
+    const todayYMD = () => new Date().toISOString().slice(0,10);
+    const dialog = $('#memberDialog');
+
+    const show = id => { $$('#app > .wrap > div.card').forEach(x=>x.classList.add('hidden')); $(`#${id}`).classList.remove('hidden'); }
+
+    // ======= AUTH =======
+    const authSection = $('#auth');
+    const appSection = $('#app');
+    const loginForm = $('#login-form');
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        $('#admin-email').textContent = user.email;
+        authSection.classList.add('hidden');
+        appSection.classList.remove('hidden');
+        show('dashboard');
+        loadAll();
+        await ensureGymDoc();
+      }else{
+        appSection.classList.add('hidden');
+        authSection.classList.remove('hidden');
+      }
+    });
+
+    loginForm?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = $('#email').value.trim();
+      const password = $('#password').value;
+      try{ await signInWithEmailAndPassword(auth, email, password); }
+      catch(err){ alert(err.message); }
+    });
+
+    $('#seed-admin')?.addEventListener('click', async ()=>{
+      const email = prompt('Admin email?');
+      const pass = prompt('Password (min 6 chars)');
+      if(!email||!pass) return;
+      try{ await createUserWithEmailAndPassword(auth, email, pass); alert('Admin created & signed in.'); }
+      catch(err){ alert(err.message); }
+    });
+
+    $('#logout').addEventListener('click', ()=>signOut(auth));
+
+    // ======= TABS =======
+    $$('#tabs .tab').forEach(btn=>btn.addEventListener('click', ()=>{
+      $$('#tabs .tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      show(btn.dataset.tab);
+    }));
+
+    // ======= GYM META =======
+    async function ensureGymDoc(){
+      const ref = doc(db, 'meta', 'gym');
+      const snap = await getDoc(ref);
+      if(!snap.exists()){
+        await setDoc(ref, { name:'Speed Fitness Gym', address:'Bazar Samiti, Near SBI, Patna', fee:1000, updatedAt: serverTimestamp() });
+      }
+      const data = (await getDoc(ref)).data();
+      $('#gymName').value = data.name || '';
+      $('#gymAddress').value = data.address || '';
+      $('#gymFee').value = data.fee || 1000;
+      $('#gym-location').textContent = data.address || '';
+    }
+
+    $('#gymForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const ref = doc(db, 'meta', 'gym');
+      await setDoc(ref, { name:$('#gymName').value, address:$('#gymAddress').value, fee:Number($('#gymFee').value), updatedAt: serverTimestamp() }, { merge:true });
+      alert('Saved');
+      $('#gym-location').textContent = $('#gymAddress').value;
+    });
+
+    // ======= MEMBERS CRUD =======
+    const memberRows = $('#memberRows');
+    const memberCol = collection(db, 'members');
+
+    function renderMemberRow(id, m){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${m.name}</td>
+        <td>${m.phone || ''}</td>
+        <td><span class="tag">${m.plan||''}</span></td>
+        <td>${m.joinDate?fmt(m.joinDate):''}</td>
+        <td>${m.expiryDate?fmt(m.expiryDate):''}</td>
+        <td>${m.active?'<span class="tag">Active</span>':'<span class="tag">Inactive</span>'}</td>
+        <td class="tools">
+          <button class="btn secondary" data-act="edit" data-id="${id}">Edit</button>
+          <button class="btn danger" data-act="del" data-id="${id}">Delete</button>
+        </td>`;
+      return tr;
+    }
+
+    function openMemberDialog(data){
+      $('#memberDlgTitle').textContent = data?.id ? 'Edit Member' : 'Add Member';
+      $('#memberId').value = data?.id || '';
+      $('#mName').value = data?.name || '';
+      $('#mPhone').value = data?.phone || '';
+      $('#mGender').value = data?.gender || 'Male';
+      $('#mPlan').value = data?.plan || 'Monthly';
+      $('#mJoin').value = data?.joinDate ? new Date(data.joinDate).toISOString().slice(0,10) : todayYMD();
+      $('#mExpiry').value = data?.expiryDate ? new Date(data.expiryDate).toISOString().slice(0,10) : '';
+      $('#mActive').value = String(data?.active ?? true);
+      dialog.showModal();
+    }
+
+    $('#openAddMember').addEventListener('click', ()=>openMemberDialog());
+    $('#closeMemberDlg').addEventListener('click', ()=>dialog.close());
+
+    $('#memberForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const payload = {
+        name: $('#mName').value.trim(),
+        phone: $('#mPhone').value.trim(),
+        gender: $('#mGender').value,
+        plan: $('#mPlan').value,
+        joinDate: $('#mJoin').value ? new Date($('#mJoin').value).toISOString() : null,
+        expiryDate: $('#mExpiry').value ? new Date($('#mExpiry').value).toISOString() : null,
+        active: $('#mActive').value === 'true',
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp()
+      }
+      const id = $('#memberId').value;
+      try{
+        if(id){ await updateDoc(doc(db,'members',id), payload); }
+        else{ await addDoc(memberCol, payload); }
+        dialog.close();
+      }catch(err){ alert(err.message); }
+    });
+
+    memberRows.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      if(btn.dataset.act==='del'){
+        if(confirm('Delete this member?')){ await deleteDoc(doc(db,'members',id)); }
+      }else if(btn.dataset.act==='edit'){
+        const snap = await getDoc(doc(db,'members',id));
+        openMemberDialog({ id, ...snap.data() });
+      }
+    });
+
+    $('#searchMember').addEventListener('input', ()=> filterMembers());
+
+    function filterMembers(){
+      const term = $('#searchMember').value.toLowerCase();
+      memberRows.querySelectorAll('tr').forEach(tr=>{
+        tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
+      });
+    }
+
+    // Export helpers
+    function toCSV(rows){ return rows.map(r=>r.map(v=>`"${(v??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n'); }
+    function download(name, text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); }
+
+    $('#exportMembers').addEventListener('click', ()=>{
+      const rows=[["Name","Phone","Plan","Join","Expiry","Active"]];
+      memberRows.querySelectorAll('tr').forEach(tr=>{
+        const tds=[...tr.children];
+        rows.push([tds[0].innerText, tds[1].innerText, tds[2].innerText, tds[3].innerText, tds[4].innerText, tds[5].innerText]);
+      });
+      download('members.csv', toCSV(rows));
+    });
+
+    // ======= ATTENDANCE =======
+    const attRows = $('#attRows');
+    const attMember = $('#attMember');
+
+    $('#attToday').addEventListener('click', ()=>{ $('#attFilterDate').value = todayYMD(); filterAttendance(); });
+
+    $('#attForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const payload = {
+        memberId: $('#attMember').value, date: $('#attDate').value, status: $('#attStatus').value,
+        createdAt: serverTimestamp()
+      };
+      if(!payload.memberId) return alert('Select member');
+      try{ await addDoc(collection(db,'attendance'), payload); $('#attDate').value=todayYMD(); }
+      catch(err){ alert(err.message); }
+    });
+
+    $('#attFilterDate').addEventListener('change', filterAttendance);
+
+    async function filterAttendance(){
+      const date = $('#attFilterDate').value;
+      attRows.innerHTML = '';
+      let qRef = query(collection(db,'attendance'), orderBy('createdAt','desc'));
+      const qs = await getDocs(qRef);
+      qs.forEach(docu=>{
+        const a = docu.data();
+        if(date && a.date !== date) return;
+        const tr = document.createElement('tr');
+        const memberName = _memberName(a.memberId);
+        tr.innerHTML = `<td>${a.date||''}</td><td>${memberName}</td><td>${a.status}</td><td><button class="btn danger" data-del="${docu.id}">Delete</button></td>`;
+        attRows.appendChild(tr);
+      });
+    }
+
+    attRows.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      if(btn.dataset.del){ if(confirm('Delete attendance?')) await deleteDoc(doc(db,'attendance',btn.dataset.del)); filterAttendance(); }
+    });
+
+    // ======= PAYMENTS =======
+    const payRows = $('#payRows');
+
+    $('#payForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const memberId = $('#payMember').value;
+      if(!memberId) return alert('Select member');
+      const amount = Number($('#payAmount').value || 0);
+      const plan = $('#payPlan').value;
+      const mode = $('#payMode').value;
+      const note = $('#payNote').value.trim();
+      const now = new Date();
+      // Extend expiry based on plan
+      const months = plan==='Monthly'?1:plan==='Quarterly'?3:plan==='Half-Yearly'?6:12;
+      const mSnap = await getDoc(doc(db,'members',memberId));
+      const m = mSnap.data();
+      const base = m?.expiryDate ? new Date(m.expiryDate) : (m?.joinDate ? new Date(m.joinDate) : now);
+      base.setMonth(base.getMonth()+months);
+      await updateDoc(doc(db,'members',memberId), { expiryDate: base.toISOString(), active: true, updatedAt: serverTimestamp(), plan });
+      await addDoc(collection(db,'payments'), { memberId, amount, plan, mode, note, date: now.toISOString(), createdAt: serverTimestamp() });
+      alert('Payment recorded & membership extended.');
+    });
+
+    $('#exportPayments').addEventListener('click', async ()=>{
+      const rows=[["Date","Member","Amount","Mode","Plan","Note"]];
+      const qs = await getDocs(query(collection(db,'payments'), orderBy('createdAt','desc')));
+      qs.forEach(p=>{
+        const d = p.data();
+        rows.push([new Date(d.date).toLocaleString(), _memberName(d.memberId), d.amount, d.mode, d.plan, d.note||'']);
+      });
+      download('payments.csv', toCSV(rows));
+    });
+
+    $('#paySearch').addEventListener('input', ()=>{
+      const term = $('#paySearch').value.toLowerCase();
+      payRows.querySelectorAll('tr').forEach(tr=>tr.style.display = tr.textContent.toLowerCase().includes(term)?'':'none');
+    });
+
+    // ======= TRAINERS =======
+    $('#addTrainer').addEventListener('click', async ()=>{
+      const name = $('#trainerName').value.trim();
+      const phone = $('#trainerPhone').value.trim();
+      if(!name) return alert('Enter name');
+      await addDoc(collection(db,'trainers'), { name, phone, createdAt: serverTimestamp() });
+      $('#trainerName').value=''; $('#trainerPhone').value='';
+    });
+
+    // ======= LIVE LOADERS =======
+    let _members = new Map();
+    function _memberName(id){ return _members.get(id)?.name || '—'; }
+
+    function loadAll(){
+      // Members
+      onSnapshot(query(memberCol, orderBy('createdAt','desc')), (snap)=>{
+        _members.clear();
+        memberRows.innerHTML='';
+        attMember.innerHTML='<option value="">— Select —</option>';
+        $('#payMember').innerHTML='<option value="">— Select —</option>';
+        let total=0, active=0, expiring=0;
+        const now = new Date();
+        snap.forEach(d=>{
+          const m = d.data(); _members.set(d.id, {id:d.id, ...m}); total++;
+          if(m.active) active++;
+          const exp = m.expiryDate? new Date(m.expiryDate): null;
+          if(exp){
+            const diff = Math.ceil((exp - now) / (1000*60*60*24));
+            if(diff <= 7) expiring++;
+          }
+          memberRows.appendChild(renderMemberRow(d.id, m));
+          const opt = new Option(m.name, d.id); attMember.add(opt.cloneNode(true)); $('#payMember').add(opt);
+        });
+        $('#stat-members').textContent = total;
+        $('#stat-active').textContent = active;
+        $('#stat-expiring').textContent = expiring;
+        filterMembers();
+      });
+
+      // Attendance (today count + list)
+      (async ()=>{
+        $('#attDate').value = todayYMD();
+        $('#attFilterDate').value = todayYMD();
+        filterAttendance();
+      })();
+
+      // Payments live list
+      onSnapshot(query(collection(db,'payments'), orderBy('createdAt','desc')), (snap)=>{
+        payRows.innerHTML='';
+        snap.forEach(p=>{
+          const d=p.data();
+          const tr=document.createElement('tr');
+          tr.innerHTML = `<td>${new Date(d.date).toLocaleString()}</td><td>${_memberName(d.memberId)}</td><td>₹${d.amount}</td><td>${d.mode}</td><td>${d.plan}</td><td>${d.note||''}</td>`;
+          payRows.appendChild(tr);
+        });
+      });
+
+      // Trainers live list
+      onSnapshot(query(collection(db,'trainers'), orderBy('createdAt','desc')), (snap)=>{
+        const tbody = $('#trainerRows'); tbody.innerHTML='';
+        snap.forEach(t=>{
+          const d=t.data(); const tr=document.createElement('tr');
+          tr.innerHTML = `<td>${d.name}</td><td>${d.phone||''}</td><td><button class="btn danger" data-id="${t.id}">Delete</button></td>`;
+          tbody.appendChild(tr);
+        });
+        tbody.onclick = async (e)=>{
+          const btn = e.target.closest('button'); if(!btn) return;
+          if(confirm('Delete trainer?')) await deleteDoc(doc(db,'trainers',btn.dataset.id));
+        }
+      });
+
+      // Today's attendance count
+      (async function todayAtt(){
+        const qRef = query(collection(db,'attendance'), where('date','==', todayYMD()));
+        const qs = await getDocs(qRef);
+        $('#stat-att').textContent = qs.size;
+      })();
+    }
+
+    // Footer year
+    $('#year').textContent = new Date().getFullYear();
+
+  </script>
+</body>
+</html>
