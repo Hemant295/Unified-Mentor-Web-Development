@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student-Teacher Management System</title>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h2 { margin-top: 20px; }
+    .container { display: none; }
+    .card { background:#fff; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);} 
+    button { padding:8px 12px; margin:4px; border:none; border-radius:5px; cursor:pointer; background:#4CAF50; color:#fff;}
+    input { padding:6px; margin:4px; }
+  </style>
+</head>
+<body>
+  <h1>Student-Teacher Management System</h1>
+
+  <!-- Login -->
+  <div id="loginDiv">
+    <h2>Admin Login</h2>
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Create Admin (once)</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="container">
+    <h2>Dashboard</h2>
+    <p>Total Students: <span id="countStudents">0</span></p>
+    <p>Total Teachers: <span id="countTeachers">0</span></p>
+    <button onclick="logout()">Logout</button>
+
+    <div class="card">
+      <h3>Add Student</h3>
+      <input id="sname" placeholder="Student Name">
+      <input id="sclass" placeholder="Class">
+      <button onclick="addStudent()">Add</button>
+    </div>
+
+    <div class="card">
+      <h3>Students List</h3>
+      <div id="studentsList"></div>
+    </div>
+
+    <div class="card">
+      <h3>Add Teacher</h3>
+      <input id="tname" placeholder="Teacher Name">
+      <input id="tsubject" placeholder="Subject">
+      <button onclick="addTeacher()">Add</button>
+    </div>
+
+    <div class="card">
+      <h3>Teachers List</h3>
+      <div id="teachersList"></div>
+    </div>
+  </div>
+
+<script>
+  // TODO: Replace with your Firebase project config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MSG_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const auth = firebase.getAuth(app);
+  const db = firebase.getFirestore(app);
+
+  // Auth
+  async function register(){
+    const email=document.getElementById('email').value;
+    const pass=document.getElementById('password').value;
+    await firebase.createUserWithEmailAndPassword(auth,email,pass);
+    alert('Admin created');
+  }
+  async function login(){
+    const email=document.getElementById('email').value;
+    const pass=document.getElementById('password').value;
+    await firebase.signInWithEmailAndPassword(auth,email,pass);
+    document.getElementById('loginDiv').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    loadData();
+  }
+  function logout(){ firebase.signOut(auth); location.reload(); }
+
+  // Students CRUD
+  async function addStudent(){
+    const name=document.getElementById('sname').value;
+    const cls=document.getElementById('sclass').value;
+    await firebase.addDoc(firebase.collection(db,'students'),{name, class:cls});
+    loadData();
+  }
+  async function loadStudents(){
+    const snap=await firebase.getDocs(firebase.collection(db,'students'));
+    let html=''; let count=0;
+    snap.forEach(doc=>{count++; html+=`<p>${doc.data().name} (${doc.data().class})</p>`});
+    document.getElementById('studentsList').innerHTML=html;
+    document.getElementById('countStudents').innerText=count;
+  }
+
+  // Teachers CRUD
+  async function addTeacher(){
+    const name=document.getElementById('tname').value;
+    const sub=document.getElementById('tsubject').value;
+    await firebase.addDoc(firebase.collection(db,'teachers'),{name, subject:sub});
+    loadData();
+  }
+  async function loadTeachers(){
+    const snap=await firebase.getDocs(firebase.collection(db,'teachers'));
+    let html=''; let count=0;
+    snap.forEach(doc=>{count++; html+=`<p>${doc.data().name} (${doc.data().subject})</p>`});
+    document.getElementById('teachersList').innerHTML=html;
+    document.getElementById('countTeachers').innerText=count;
+  }
+
+  async function loadData(){
+    loadStudents();
+    loadTeachers();
+  }
+</script>
+</body>
+</html>
